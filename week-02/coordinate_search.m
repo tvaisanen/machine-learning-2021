@@ -64,12 +64,12 @@ function [g_min, w_min, g_history, w_history] = coordinateSearch( g, w0, max_ite
         % << STORE THE UPDATED LOCATION AFTER TAKING THE BEST STEP
         % USING w_candidates and best_ind >>
         w_min = w_candidates(best_ind,:)
-        
+
+                
         if nargout > 2  % Store history if requested           
             g_history = [g_history; g_min];
             w_history = [w_history; w_min];
         end
-        
     end
     
 end
