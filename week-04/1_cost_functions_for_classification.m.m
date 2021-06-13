@@ -1,27 +1,26 @@
 % Load the data from the file '2d_classification_data_v1_entropy.csv' using the load function
 A = load('2d_classification_data_v1_entropy.csv');
 
-[~, P] = size(A);
+[~,P] = size(A);
 
-x = A(1,:)'; 
-y = A(2,:)';
+x =  A(1,:)'; 
+y =  A(2,:)';
 
-x_aug = @(x) [ones([1,size(x,2)]); x];
+x_aug = @(x) [ones([size(x,1),1]), x];
 
 % Define the step function, for t=0 return 1. Return value in the same data type as t or a double
-step = @takeStep;    
+step = @takeStep; 
+
 x_size = size(x)
-model = @(x, w) w(1) + x * w(2:end);
-% model = @(x, w) x_aug(x)' * w;
-% model = @(x, w) dot([ones([size(x,2),1]), x'], w);
-% model = @(x, w) (w(1,:) + x' .* w(2:end))';
+
+model = @(x, w) x_aug(x) * w';
 
 % Define the step model function using the step function
 model_step = @(x,w) step(model(x,w));  
 
 % Define the step cost function using the model_step
 % this is linear regression with model_step
-cost_step_LS = @(w) ((1/P) * sum(model_step(x,w) - y));     
+cost_step_LS = @(w) ((1/P) * sum((model_step(x,w) - y) .^ 2))';     
 
 % Define the sigmoid function
 sigmoid = @(x) arrayfun(@(x) (1/(1 + exp(-x))), x);
@@ -30,16 +29,10 @@ sigmoid = @(x) arrayfun(@(x) (1/(1 + exp(-x))), x);
 model_logit = @(x,w) sigmoid(model(x,w));  
 
 % Define the Logistic regression Least Squares cost function
-cost_logit_LS = @(w) ((1/P) * sum(model_logit(x,w) - y)); % IMPLEMENT THE ANONONYMOUS FUNCTION
+cost_logit_LS = @(w) ((1/P) * sum(model_logit(x,w) - y))'; 
 
 % Define the Logistic regression Cross-Entropy cost function
-cost_logit_CE = @(w) ((1/P) * y .* log(model_logit(x, w)) + 
-                      (1 - y) .* log(1 - model_logit(x, w))));  
-% IMPLEMENT THE ANONONYMOUS FUNCTION
-
-% 
-
-% Plot the result (not mandatory, but beneficial)
+cost_logit_CE = @(w) (-1/P) *  sum((y .* log(model_logit(x, w))) + (1 - y) .* log(1 - model_logit(x, w)))';  
 
 % Initialíze a regular rectangular 2D grid of points to evaluate the cost functions on
 % Create 100 equidistantly spaced samples from -20 to +20 (limits inclusive)
@@ -74,20 +67,22 @@ legend('Data', 'Step opt.', 'Logit opt.', 'Step unopt.', 'Logit unopt.' )
 title('Classification regression problem')
 
 % Plot the cost function surfaces in 3D
-%cost_functions = { cost_step_LS, cost_logit_LS, cost_logit_CE };
-%cost_function_names = { 'Step LS cost', 'Logit LS cost', 'Logit CE cost' };
-%M = length( cost_functions );
-%v = [-152 42];
-%figure
-%for i = 1:M
-%    subplot(M,1,i)
-%    surface(XX,YY, arrayfun( @(x,y) cost_functions{i}( [x y] ), XX, YY ) )
-%    view(v)
-%    xlabel('w_0')
-%    ylabel('w_1')
-%	zlabel('cost')
-%    title( cost_function_names{i} )
-%end
+
+cost_functions = { cost_step_LS, cost_logit_LS, cost_logit_CE };
+cost_function_names = { 'Step LS cost', 'Logit LS cost', 'Logit CE cost' };
+M = length( cost_functions );
+v = [-152 42];
+figure
+for i = 1:M
+    subplot(M,1,i)
+    surface(XX,YY, arrayfun( @(x,y) cost_functions{i}( [x y] ), XX, YY ) )
+    view(v)
+    xlabel('w_0')
+    ylabel('w_1')
+	zlabel('cost')
+    title( cost_function_names{i} )
+end
+
 
 
 function s = takeStep(t)
